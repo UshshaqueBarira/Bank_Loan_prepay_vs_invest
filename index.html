@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multi-Prepayment Loan Strategy</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --bg-slate: #f8fafc;
+      --card-bg: #ffffff;
+      --border-color: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --green-bg: #ecfdf5;
+      --green-border: #a7f3d0;
+      --green-text: #047857;
+      --blue-accent: #2563eb;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      color: var(--text-main);
+      padding: 24px 16px;
+    }
+
+    .calculator-card {
+      max-width: 860px;
+      margin: 0 auto;
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 28px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .subtitle {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .currency-selector {
+      padding: 6px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      background: #fff;
+    }
+
+    /* Verdict Banner */
+    .verdict-box {
+      background-color: var(--green-bg);
+      border: 1px solid var(--green-border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+
+    .verdict-badge {
+      display: inline-block;
+      background: #d1fae5;
+      color: var(--green-text);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .verdict-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #065f46;
+      margin-bottom: 4px;
+    }
+
+    .verdict-desc {
+      font-size: 0.85rem;
+      color: #047857;
+      line-height: 1.4;
+    }
+
+    /* Chart Container */
+    .chart-wrapper {
+      position: relative;
+      height: 260px;
+      margin-bottom: 24px;
+    }
+
+    /* NEW: Grand Total Banner */
+    .grand-total-banner {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      color: #ffffff;
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+    }
+
+    .total-stat-item {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .total-stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      opacity: 0.85;
+      font-weight: 600;
+    }
+
+    .total-stat-val {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-top: 4px;
+    }
+
+    .total-stat-sub {
+      font-size: 0.75rem;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    /* Input Sections */
+    .section-box {
+      background-color: var(--bg-slate);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .input-group input {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 0.95rem;
+      outline: none;
+      background: #fff;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+    }
+
+    /* Prepayment List */
+    .prepayment-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 10px;
+    }
+
+    .prep-index {
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      width: 30px;
+    }
+
+    .btn-add {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-add:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-remove {
+      color: #ef4444;
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0 6px;
+    }
+
+    /* Cumulative Impact Section */
+    .impact-wrapper {
+      border: 1px solid #dbeafe;
+      background: #eff6ff;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .impact-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 14px;
+    }
+
+    @media (max-width: 640px) {
+      .impact-grid { grid-template-columns: 1fr; }
+    }
+
+    .strategy-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .strategy-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--blue-accent);
+      background: #dbeafe;
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 6px;
+    }
+
+    .strategy-title {
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .strategy-desc {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+    }
+
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      padding: 4px 0;
+    }
+
+    .data-row .val {
+      font-weight: 700;
+    }
+
+    .val-highlight {
+      color: #2563eb;
+    }
+
+    .val-green {
+      color: #059669;
+    }
+  </style>
+</head>
+<body>
+
+<div class="calculator-card">
+  <!-- Title & Header -->
+  <div class="header-row">
+    <div>
+      <h1 class="title">Multi-Prepayment Loan Strategy</h1>
+      <p class="subtitle">Simulate up to 5 Prepayment Lump Sums & Compare ROI</p>
+    </div>
+    <select class="currency-selector">
+      <option>INR (₹)</option>
+    </select>
+  </div>
+
+  <!-- Verdict Banner -->
+  <div class="verdict-box">
+    <div class="verdict-badge">VERDICT</div>
+    <div id="verdict-title" class="verdict-title">Invest the Lump Sums</div>
+    <div id="verdict-desc" class="verdict-desc">Evaluating optimal financial strategy...</div>
+  </div>
+
+  <!-- Chart Area -->
+  <div class="chart-wrapper">
+    <canvas id="strategyChart"></canvas>
+  </div>
+
+  <!-- GRAND TOTAL REPAYMENT BANNER (Dynamically Updated) -->
+  <div class="grand-total-banner">
+    <div class="total-stat-item">
+      <span class="total-stat-label">Original Total Repayment</span>
+      <span class="total-stat-val" id="gt-original">₹0</span>
+      <span class="total-stat-sub" id="gt-original-sub">Principal + Interest</span>
+    </div>
+    <div class="total-stat-item">
+      <span class="total-stat-label">Tenure Reduction Total</span>
+      <span class="total-stat-val" id="gt-strat-a">₹0</span>
+      <span class="total-stat-sub" id="gt-strat-a-sub">Saves ₹0 Interest</span>
+    </div>
+    <div class="total-stat-item">
+      <span class="total-stat-label">EMI Reduction Total</span>
+      <span class="total-stat-val" id="gt-strat-b">₹0</span>
+      <span class="total-stat-sub" id="gt-strat-b-sub">Saves ₹0 Interest</span>
+    </div>
+  </div>
+
+  <!-- Section 1: Primary Loan Details -->
+  <div class="section-box">
+    <div class="section-header">
+      <span class="section-title">1. Primary Loan Details</span>
+    </div>
+    <div class="grid-3">
+      <div class="input-group">
+        <label>Loan Amount</label>
+        <input type="number" id="loanAmount" value="9400000" oninput="calculateAll()">
+      </div>
+      <div class="input-group">
+        <label>Tenure (Years)</label>
+        <input type="number" id="tenureYears" value="10" oninput="calculateAll()">
+      </div>
+      <div class="input-group">
+        <label>Bank Rate (%)</label>
+        <input type="number" step="0.1" id="bankRate" value="7.2" oninput="calculateAll()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Prepayment Schedule -->
+  <div class="section-box">
+    <div class="section-header">
+      <span class="section-title">2. Prepayment Schedule (Max 5)</span>
+      <button class="btn-add" onclick="addPrepayment()">+ Add Prepayment</button>
+    </div>
+    <div id="prepaymentsContainer">
+      <!-- Dynamic Prepayment Rows -->
+    </div>
+  </div>
+
+  <!-- Section 3: Returns & Tax Profile -->
+  <div class="section-box">
+    <div class="section-header">
+      <span class="section-title">3. Returns & Tax Profile</span>
+    </div>
+    <div class="grid-3">
+      <div class="input-group">
+        <label>Expected ROI (%)</label>
+        <input type="number" step="0.1" id="expectedRoi" value="10.0" oninput="calculateAll()">
+      </div>
+      <div class="input-group">
+        <label>Income Tax Bracket (%)</label>
+        <input type="number" id="taxBracket" value="30" oninput="calculateAll()">
+      </div>
+      <div class="input-group">
+        <label>Cap Gains Tax (%)</label>
+        <input type="number" step="0.1" id="capGainsTax" value="12.5" oninput="calculateAll()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: Cumulative Impact -->
+  <div class="impact-wrapper">
+    <span class="section-title" style="color: #1e40af;">4. Cumulative Prepayment Impact</span>
+    
+    <div class="impact-grid">
+      <!-- Strategy A Card -->
+      <div class="strategy-card">
+        <span class="strategy-badge">STRATEGY A</span>
+        <h3 class="strategy-title">Reduce Loan Tenure</h3>
+        <p class="strategy-desc">Keep original EMI constant, close loan earlier.</p>
+        
+        <div class="data-row">
+          <span>Original Tenure:</span>
+          <span class="val" id="stratA-origTenure">10 Yrs</span>
+        </div>
+        <div class="data-row">
+          <span>New Reduced Tenure:</span>
+          <span class="val val-highlight" id="stratA-newTenure">0 Yrs</span>
+        </div>
+        <div class="data-row">
+          <span>Total Time Saved:</span>
+          <span class="val val-green" id="stratA-timeSaved">0 Yrs</span>
+        </div>
+        <div class="data-row">
+          <span>Total Interest Saved:</span>
+          <span class="val val-green" id="stratA-interestSaved">₹0</span>
+        </div>
+      </div>
+
+      <!-- Strategy B Card -->
+      <div class="strategy-card">
+        <span class="strategy-badge" style="background:#fef3c7; color:#b45309;">STRATEGY B</span>
+        <h3 class="strategy-title">Reduce Monthly EMI</h3>
+        <p class="strategy-desc">Recalculate EMI at each prepayment event.</p>
+        
+        <div class="data-row">
+          <span>Original Monthly EMI:</span>
+          <span class="val" id="stratB-origEmi">₹0/mo</span>
+        </div>
+        <div class="data-row">
+          <span>Final Reduced Monthly EMI:</span>
+          <span class="val val-green" id="stratB-finalEmi">₹0/mo</span>
+        </div>
+        <div class="data-row">
+          <span>Monthly Outflow Dropped:</span>
+          <span class="val val-green" id="stratB-drop">₹0/mo</span>
+        </div>
+        <div class="data-row">
+          <span>Total Interest Saved:</span>
+          <span class="val val-green" id="stratB-interestSaved">₹0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let chartInstance = null;
+  let prepayments = [
+    { year: 4, amount: 500000 },
+    { year: 7, amount: 1000000 }
+  ];
+
+  const formatCurr = (val) => "₹" + Math.round(val).toLocaleString('en-IN');
+
+  function renderPrepayments() {
+    const container = document.getElementById('prepaymentsContainer');
+    container.innerHTML = '';
+
+    prepayments.forEach((p, idx) => {
+      const row = document.createElement('div');
+      row.className = 'prepayment-row';
+      row.innerHTML = `
+        <span class="prep-index">#${idx + 1}</span>
+        <div class="input-group" style="flex:1;">
+          <label style="font-size:0.75rem;">At Year</label>
+          <input type="number" value="${p.year}" onchange="updatePrepayment(${idx}, 'year', this.value)">
+        </div>
+        <div class="input-group" style="flex:2;">
+          <label style="font-size:0.75rem;">Prepayment Amount</label>
+          <input type="number" value="${p.amount}" onchange="updatePrepayment(${idx}, 'amount', this.value)">
+        </div>
+        <button class="btn-remove" onclick="removePrepayment(${idx})">✕</button>
+      `;
+      container.appendChild(row);
+    });
+  }
+
+  function addPrepayment() {
+    if (prepayments.length < 5) {
+      prepayments.push({ year: 1, amount: 100000 });
+      renderPrepayments();
+      calculateAll();
+    }
+  }
+
+  function removePrepayment(idx) {
+    prepayments.splice(idx, 1);
+    renderPrepayments();
+    calculateAll();
+  }
+
+  function updatePrepayment(idx, field, val) {
+    prepayments[idx][field] = Number(val) || 0;
+    calculateAll();
+  }
+
+  function calculateAll() {
+    const P = Number(document.getElementById('loanAmount').value) || 0;
+    const years = Number(document.getElementById('tenureYears').value) || 0;
+    const rate = Number(document.getElementById('bankRate').value) || 0;
+    const roi = Number(document.getElementById('expectedRoi').value) || 0;
+    const capGains = Number(document.getElementById('capGainsTax').value) || 0;
+
+    const n = years * 12;
+    const r = (rate / 100) / 12;
+
+    if (P <= 0 || n <= 0 || r <= 0) return;
+
+    // Monthly EMI Calculation
+    const originalEmi = (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+    const originalTotalPayment = originalEmi * n;
+    const originalTotalInterest = originalTotalPayment - P;
+
+    // Simulate Strategy A (Tenure Reduction)
+    let balanceA = P;
+    let monthsA = 0;
+    let totalInterestA = 0;
+
+    for (let m = 1; m <= n; m++) {
+      if (balanceA <= 0) break;
+      const interestM = balanceA * r;
+      let principalM = originalEmi - interestM;
+
+      // Check prepayments
+      prepayments.forEach(prep => {
+        if (prep.year * 12 === m) {
+          balanceA -= prep.amount;
+        }
+      });
+
+      balanceA -= principalM;
+      totalInterestA += interestM;
+      monthsA = m;
+    }
+
+    // Simulate Strategy B (EMI Reduction)
+    let balanceB = P;
+    let currentEmi = originalEmi;
+    let totalInterestB = 0;
+
+    for (let m = 1; m <= n; m++) {
+      if (balanceB <= 0) break;
+      const interestM = balanceB * r;
+      let principalM = currentEmi - interestM;
+
+      // Check prepayments
+      let prepayHappened = false;
+      prepayments.forEach(prep => {
+        if (prep.year * 12 === m) {
+          balanceB -= prep.amount;
+          prepayHappened = true;
+        }
+      });
+
+      balanceB -= principalM;
+      totalInterestB += interestM;
+
+      if (prepayHappened && balanceB > 0 && m < n) {
+        const remMonths = n - m;
+        currentEmi = (balanceB * r * Math.pow(1 + r, remMonths)) / (Math.pow(1 + r, remMonths) - 1);
+      }
+    }
+
+    const interestSavedA = Math.max(0, originalTotalInterest - totalInterestA);
+    const interestSavedB = Math.max(0, originalTotalInterest - totalInterestB);
+
+    // Grand Totals
+    const gtOriginal = originalTotalPayment;
+    const gtStratA = P + totalInterestA;
+    const gtStratB = P + totalInterestB;
+
+    // Update Banner UI
+    document.getElementById('gt-original').textContent = formatCurr(gtOriginal);
+    document.getElementById('gt-strat-a').textContent = formatCurr(gtStratA);
+    document.getElementById('gt-strat-a-sub').textContent = `Saves ${formatCurr(interestSavedA)} Interest`;
+    document.getElementById('gt-strat-b').textContent = formatCurr(gtStratB);
+    document.getElementById('gt-strat-b-sub').textContent = `Saves ${formatCurr(interestSavedB)} Interest`;
+
+    // Update Strategy Cards UI
+    document.getElementById('stratA-origTenure').textContent = `${years} Yrs`;
+    const newYrsA = (monthsA / 12).toFixed(1);
+    document.getElementById('stratA-newTenure').textContent = `${newYrsA} Yrs (${Math.ceil(monthsA / 12)} Yrs total)`;
+    const timeSavedMonths = n - monthsA;
+    const yrsSaved = Math.floor(timeSavedMonths / 12);
+    const mosSaved = timeSavedMonths % 12;
+    document.getElementById('stratA-timeSaved').textContent = `${yrsSaved} Yrs ${mosSaved} Mos`;
+    document.getElementById('stratA-interestSaved').textContent = formatCurr(interestSavedA);
+
+    document.getElementById('stratB-origEmi').textContent = `${formatCurr(originalEmi)}/mo`;
+    document.getElementById('stratB-finalEmi').textContent = `${formatCurr(currentEmi)}/mo`;
+    document.getElementById('stratB-drop').textContent = `${formatCurr(originalEmi - currentEmi)}/mo`;
+    document.getElementById('stratB-interestSaved').textContent = formatCurr(interestSavedB);
+
+    // Investment simulation over timeline
+    const timelineYears = Array.from({ length: years + 1 }, (_, i) => `Yr ${i}`);
+    const investmentLine = new Array(years + 1).fill(0);
+    const savingsLine = new Array(years + 1).fill(0);
+
+    let cumulativePrepayment = 0;
+    for (let y = 1; y <= years; y++) {
+      prepayments.forEach(p => {
+        if (p.year <= y) {
+          cumulativePrepayment += p.amount;
+        }
+      });
+
+      // Simple Net Post-tax investment projection
+      const monthlyRoi = (roi / 100) / 12;
+      let totalInv = 0;
+      prepayments.forEach(p => {
+        if (p.year <= y) {
+          const mCompounded = (y - p.year) * 12;
+          const futureVal = p.amount * Math.pow(1 + monthlyRoi, mCompounded);
+          const profit = futureVal - p.amount;
+          const postTaxProfit = profit * (1 - capGains / 100);
+          totalInv += p.amount + postTaxProfit;
+        }
+      });
+
+      investmentLine[y] = totalInv;
+      savingsLine[y] = (interestSavedA / years) * y;
+    }
+
+    const finalInvValue = investmentLine[years];
+    const diff = finalInvValue - interestSavedA;
+
+    if (diff > 0) {
+      document.getElementById('verdict-title').textContent = "Invest the Lump Sums";
+      document.getElementById('verdict-desc').textContent = `Investing your scheduled prepayments at ${roi.toFixed(1)}% generates ~${formatCurr(diff)} more in post-tax net worth over ${years} years than prepaying the loan.`;
+    } else {
+      document.getElementById('verdict-title').textContent = "Prepay the Loan";
+      document.getElementById('verdict-desc').textContent = `Prepaying your loan saves ~${formatCurr(Math.abs(diff))} more in guaranteed interest compared to post-tax market returns.`;
+    }
+
+    updateChart(timelineYears, investmentLine, savingsLine);
+  }
+
+  function updateChart(labels, investData, savingsData) {
+    const ctx = document.getElementById('strategyChart').getContext('2d');
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Investments Net Post-Tax Value',
+            data: investData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 3
+          },
+          {
+            label: 'Prepayments Interest Savings Value',
+            data: savingsData,
+            borderColor: '#3b82f6',
+            backgroundColor: 'transparent',
+            borderWidth: 3,
+            tension: 0.3,
+            pointRadius: 3
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: {
+            ticks: {
+              callback: (val) => '₹' + (val / 100000).toFixed(0) + 'L'
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // Initial load
+  renderPrepayments();
+  calculateAll();
+</script>
+
+</body>
+</html>
